@@ -22,6 +22,7 @@ from typing import List
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
+#2.14it/s -> 3.53it/s - performance after second committ (adding changes in main after changing net.py)
 
 def main(args: argparse.Namespace, activeloop: bool = True) -> None:
 
@@ -32,18 +33,7 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
     # Load the Neural Net. NOTE: set number of distinct labels here
     model = Net(n_classes=6)
 
-    # Compute class weights dynamically from dataset
-    class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.targets), y=train_dataset.targets)
-    class_weights = torch.tensor(class_weights, dtype=torch.float)
-
-    # Initialize optimizer(s) and loss function(s)
-    optimizer = optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
-    loss_function = nn.CrossEntropyLoss(weight=class_weights)
-
-    # Learning rate scheduler: Reduce LR when test loss plateaus
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
-
-    # fetch epoch and batch count from arguments
+    # Fetch epoch and batch count from arguments
     n_epochs = args.nb_epochs
     batch_size = args.batch_size
 
@@ -71,6 +61,17 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
         device = "cpu"
         # Creating a summary of our model and its layers:
         summary(model, (1, 128, 128), device=device)
+
+    # Compute class weights dynamically from dataset
+    class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.targets), y=train_dataset.targets)
+    class_weights = torch.tensor(class_weights, dtype=torch.float).to(device)  # FIX: Move to correct device
+
+    # Initialize optimizer(s) and loss function(s)
+    optimizer = optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
+    loss_function = nn.CrossEntropyLoss(weight=class_weights)  # Now correctly on MPS
+
+    # Learning rate scheduler: Reduce LR when test loss plateaus
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
     # Lets now train and test our model for multiple epochs:
     train_sampler = BatchSampler(
@@ -114,9 +115,9 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
 
             plotext.show()
 
-    # retrieve current time to label artifacts
+    # Retrieve current time to label artifacts
     now = datetime.now()
-    # check if model_weights/ subdir exists
+    # Check if model_weights/ subdir exists
     if not Path("model_weights/").exists():
         os.mkdir(Path("model_weights/"))
     
@@ -135,7 +136,7 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
     if not Path("artifacts/").exists():
         os.mkdir(Path("artifacts/"))
 
-    # save plot of losses
+    # Save plot of losses
     fig.savefig(Path("artifacts") / f"session_{now.month:02}_{now.day:02}_{now.hour}_{now.minute:02}.png")
 
 

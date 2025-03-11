@@ -3,6 +3,7 @@ import torch.nn as nn
 
 
 class Net(nn.Module):
+    #27.31it/s -> 2.14it/s - performance after first committ (adding changes in net only)
     def __init__(self, n_classes: int) -> None:
         super(Net, self).__init__()
 
