@@ -14,7 +14,7 @@ This project uses **Convolutional Neural Networks (CNNs)** to assist radiologist
 ---
 
 ## **🛠 Project Structure**
-```bash
+
 ThoracicAI/
 │── dc1/                 # Project source code
 │   ├── batch_sampler.py  # Custom batch sampling strategy for handling class imbalance
@@ -47,7 +47,6 @@ ThoracicAI/
 
 ## **🚀 Installation & Setup**
 ### **1️⃣ Clone the Repository**
-```bash
 git clone https://github.com/your-username/ThoracicAI.git
 cd ThoracicAI
 
