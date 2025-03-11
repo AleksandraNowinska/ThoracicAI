@@ -19,6 +19,8 @@ import plotext  # type: ignore
 from datetime import datetime
 from pathlib import Path
 from typing import List
+from sklearn.utils.class_weight import compute_class_weight
+import numpy as np
 
 
 def main(args: argparse.Namespace, activeloop: bool = True) -> None:
@@ -30,9 +32,16 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
     # Load the Neural Net. NOTE: set number of distinct labels here
     model = Net(n_classes=6)
 
+    # Compute class weights dynamically from dataset
+    class_weights = compute_class_weight('balanced', classes=np.unique(train_dataset.targets), y=train_dataset.targets)
+    class_weights = torch.tensor(class_weights, dtype=torch.float)
+
     # Initialize optimizer(s) and loss function(s)
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.1)
-    loss_function = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.0003, weight_decay=1e-5)
+    loss_function = nn.CrossEntropyLoss(weight=class_weights)
+
+    # Learning rate scheduler: Reduce LR when test loss plateaus
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
     # fetch epoch and batch count from arguments
     n_epochs = args.nb_epochs
@@ -87,10 +96,13 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
             # Testing:
             losses = test_model(model, test_sampler, loss_function, device)
 
-            # # Calculating and printing statistics:
+            # Calculating and printing statistics:
             mean_loss = sum(losses) / len(losses)
             mean_losses_test.append(mean_loss)
             print(f"\nEpoch {e + 1} testing done, loss on test set: {mean_loss}\n")
+
+            # Step the scheduler based on test loss
+            scheduler.step(mean_loss)
 
             ### Plotting during training
             plotext.clf()
