@@ -47,7 +47,6 @@ ThoracicAI/
 
 ## **🚀 Installation & Setup**
 ### **1️⃣ Clone the Repository**
-```bash
 git clone https://github.com/your-username/ThoracicAI.git
 cd ThoracicAI
 
