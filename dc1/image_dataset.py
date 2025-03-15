@@ -6,6 +6,10 @@ from os import path
 from typing import Tuple
 from pathlib import Path
 import os
+import cv2
+import torchxrayvision as xrv
+from pathlib import Path
+from typing import Tuple
 
 
 class ImageDataset:
@@ -44,3 +48,19 @@ class ImageDataset:
 
         return np.load(path)
 
+    @staticmethod
+    def apply_clahe(image: np.ndarray) -> np.ndarray:
+        """ Stosuje CLAHE do poprawy kontrastu obrazu """
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        return clahe.apply(image)
+
+    def preprocess_images(self, images: np.ndarray) -> np.ndarray:
+        """ Przetwarza obrazy: CLAHE + zmiana rozmiaru """
+        processed_imgs = []
+        resizer = xrv.datasets.XRayResizer(224)  # Ustawienie na 224x224
+        for img in images:
+            img = self.apply_clahe(img.astype(np.uint8))  # CLAHE poprawia kontrast
+            img = resizer(img)  # Skalowanie obrazu
+            processed_imgs.append(img)
+
+        return np.array(processed_imgs).astype(np.float32) / 255.0  # Normalizacja do [0,1]
