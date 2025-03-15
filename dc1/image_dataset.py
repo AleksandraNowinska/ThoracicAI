@@ -50,17 +50,17 @@ class ImageDataset:
 
     @staticmethod
     def apply_clahe(image: np.ndarray) -> np.ndarray:
-        """ Stosuje CLAHE do poprawy kontrastu obrazu """
+        """ adds CLAHE to enhance picture contrast """
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         return clahe.apply(image)
 
     def preprocess_images(self, images: np.ndarray) -> np.ndarray:
         """ Przetwarza obrazy: CLAHE + zmiana rozmiaru """
         processed_imgs = []
-        resizer = xrv.datasets.XRayResizer(224)  # Ustawienie na 224x224
+        resizer = xrv.datasets.XRayResizer(224) 
         for img in images:
-            img = self.apply_clahe(img.astype(np.uint8))  # CLAHE poprawia kontrast
-            img = resizer(img)  # Skalowanie obrazu
+            img = self.apply_clahe(img.astype(np.uint8))  
+            img = resizer(img) 
             processed_imgs.append(img)
 
-        return np.array(processed_imgs).astype(np.float32) / 255.0  # Normalizacja do [0,1]
+        return np.array(processed_imgs).astype(np.float32) / 255.0  # Normalization to [0,1]
