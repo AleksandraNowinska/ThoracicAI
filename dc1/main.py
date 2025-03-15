@@ -20,6 +20,28 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
+# For GradCam implementation
+from grad_cam import GradCAM
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def test_grad_cam(model, test_dataset):
+    """ Runs Grad-CAM on a sample image to visualize model attention """
+    model.eval()
+    sample_idx = np.random.randint(len(test_dataset))
+
+    image_tensor, label = test_dataset[sample_idx]
+
+    # Convert image back to numpy array for visualization
+    original_image = (image_tensor.numpy() * 255).astype(np.uint8)
+    original_image = cv2.cvtColor(original_image, cv2.COLOR_GRAY2BGR)
+
+    # Get Grad-CAM for the selected image
+    grad_cam = GradCAM(model, model.model.features[-1])  # Last convolutional layer
+    grad_cam.visualize(image_tensor, original_image, class_idx=label)
+
 
 def main(args: argparse.Namespace, activeloop: bool = True) -> None:
 
@@ -125,6 +147,9 @@ def main(args: argparse.Namespace, activeloop: bool = True) -> None:
 
     # save plot of losses
     fig.savefig(Path("artifacts") / f"session_{now.month:02}_{now.day:02}_{now.hour}_{now.minute:02}.png")
+
+    # 🔥 Run Grad-CAM on a sample image after training
+    test_grad_cam(model, test_dataset)
 
 
 if __name__ == "__main__":
